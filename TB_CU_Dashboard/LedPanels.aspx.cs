@@ -11,23 +11,28 @@ using System.Net.Mail;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Text;
+using System.Web.UI.HtmlControls;
 namespace TB_CU_Dashboard
 {
     public partial class LedPanels : System.Web.UI.Page
     {
-        SqlDataAdapter daCU; // qty pe shift
-        //SqlDataAdapter daTB;
+        SqlDataAdapter daCU; 
+       
         SqlDataAdapter daScrapIV;
 
-        DataSet dsCU = new DataSet();
-        //DataSet dsTB = new DataSet();
-        DataSet dsScrapIV = new DataSet();
+       readonly DataSet dsCU = new DataSet();
+       
+       readonly DataSet dsScrapIV = new DataSet();
 
         StringBuilder htmlTable = new StringBuilder();
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!Page.IsPostBack)
+            
                 BindData();
+                HtmlMeta meta = new HtmlMeta();
+                meta.HttpEquiv = "Refresh";
+                meta.Content = "300;url=LedPanels.aspx";
+                this.Page.Controls.Add(meta);
         }
 
         private void BindData()
@@ -82,14 +87,13 @@ namespace TB_CU_Dashboard
             TimeSpan Shift1 = TimeSpan.FromHours(7);
             TimeSpan Shift2 = TimeSpan.FromHours(15);
             TimeSpan Shift3 = TimeSpan.FromHours(23);
-            TimeSpan Midnight = TimeSpan.FromHours(00);
+       
 
             TimeSpan currentTime = DateTime.Now.TimeOfDay;
             //-------------------------------------------------
-            double ShiftTotalTime = 8 * 60; //480 min pe shift
-            double DayTotalTime = 24 * 60; //1440 min intr-o zi
+         
             double minutes; //de la inceputul shift-ului
-            double minutesDay; // de la inceputul zilei de lucru
+           
             double min;
             //----------------------------
             DateTime dFromFullDay;
@@ -98,36 +102,23 @@ namespace TB_CU_Dashboard
             string sDateFrom;
             string sDateFromFullDay = "07:00:00"; // inceputul zilei de lucru
             string sDateTo = Convert.ToString(currentTime); //Now time
-            int h, m, s;
+          
             int hour, mins, secs;
-            string dayDiff;
+          
             string timeDiff;
             double intervaleTrecute;
             double Target;
             double DailyTarget;
-            //double EfficiencyPrevCU;
-            //double EfficiencyPrevTB;
-            ////////////// Conditia pe schimburi /////////////////////////////////////////////////////
+         
             htmlTable.Append("<table border='2px solid bold' style='border-collapse: collapse;text-align:center; border-color:white; text-align: center; background-color: black; color: white;'>");
             htmlTable.Append("<tr><font face='arial'><th>Timisoara</th><th>Realizat</th><th>Target</th><th>Target Zilnic</th></font></tr>");
             if (currentTime >= Shift1 && currentTime < Shift2)
             {
-                //====================================== SHIFT 1 ================================================================
-
-                //if (!object.Equals(dsCU.Tables[0], null))
-                //{
+             
                 sDateFrom = "07:00:00"; // shift 1 start time
                 if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo) && DateTime.TryParse(sDateFromFullDay, out dFromFullDay))
                 {
-                    //Numara cate minute au trecut de la inceputul zilei de lucru:
-                    /*TimeSpan TD = dTo - dFromFullDay;
-                    h = TD.Hours;
-                    m = TD.Minutes;
-                    s = TD.Seconds;
-                    dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00");
-                    minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                    //Numara cate minute au trecut de la inceputul shiftului:
+                 
                     TimeSpan TS = dTo - dFrom;
                     minutes = TS.TotalMinutes;
 
@@ -136,9 +127,8 @@ namespace TB_CU_Dashboard
                     secs = TS.Seconds;
                     timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
                     Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 1: " + timeDiff;
-                    //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                    //Intervale trecute
+                  
+               
                     intervaleTrecute = minutes / 10;
                     int salvat = Convert.ToInt32(intervaleTrecute);
                     Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
@@ -150,7 +140,7 @@ namespace TB_CU_Dashboard
                         {
                             DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
                             Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                            //Label1.Text = Convert.ToString(DailyTarget);
+                       
                             htmlTable.Append("<tr>");
                             htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsCU.Tables[0].Rows[i]["area"] + " [anvelope] " + "</font></td>");
                             if (Convert.ToInt32(dsCU.Tables[0].Rows[i]["Quantity"]) >= Convert.ToInt32(Target))
@@ -166,7 +156,7 @@ namespace TB_CU_Dashboard
                             htmlTable.Append("</tr>");
                         }
                     }
-                    int TargetScrapDay = 780; // anul 2020. Daily goal (OAT_Daily Trend)
+                    int TargetScrapDay = 780;
                     double TargetScrap;
                     if (dsScrapIV.Tables[0].Rows.Count > 0)
                     {
@@ -188,7 +178,7 @@ namespace TB_CU_Dashboard
                             htmlTable.Append("</tr>");
                         }
                     }
-                    //=====================Scrolling Text=====================
+                 
                     htmlTable.Append("<tr>");
                     htmlTable.Append(@"<td colspan='4' style='background-color:black; color:white;'><b><font face='arial'>
                         <marquee behavior='scroll' direction='left' scrollamount='3'>Continental Anvelope Timisoara    
@@ -207,15 +197,7 @@ namespace TB_CU_Dashboard
 
                     if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo) && DateTime.TryParse(sDateFromFullDay, out dFromFullDay))
                     {
-                        //Numara cate minute au trecut de la inceputul zilei de lucru:
-                        /* TimeSpan TD = dTo - dFromFullDay;
-                         h = TD.Hours;
-                         m = TD.Minutes;
-                         s = TD.Seconds;
-                         dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00");
-                         minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                        //Numara cate minute au trecut de la inceputul shiftului:
+                      
                         TimeSpan TS = dTo - dFrom;
                         minutes = TS.TotalMinutes;
 
@@ -224,7 +206,7 @@ namespace TB_CU_Dashboard
                         secs = TS.Seconds;
                         timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
                         Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 2: " + timeDiff;
-                        //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
+                       
 
                         //Intervale trecute
                         intervaleTrecute = minutes / 10;
@@ -297,15 +279,9 @@ namespace TB_CU_Dashboard
                         if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo))
                         {
 
-                            //Numara cate minute au trecut de la inceputul zilei de lucru:
-                            /*TimeSpan TD = dTo - dFromFullDay;
-                            h = TD.Hours;
-                            m = TD.Minutes;
-                            s = TD.Seconds;
-                            dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00"); /// ERROR !!!!!!!!!!!! 
-                            minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
+                         
 
-                            //Numara cate minute au trecut de la inceputul shiftului:
+                           
                             TimeSpan TS = dTo - dFrom;
                             minutes = TS.TotalMinutes;
 
@@ -383,15 +359,6 @@ namespace TB_CU_Dashboard
                             if (DateTime.TryParse("00:00:00", out dFrom) && DateTime.TryParse(sDateTo, out dTo))
                             {
 
-                                //Numara cate minute au trecut de la inceputul zilei de lucru:
-                                /*TimeSpan TD = dTo - dFromFullDay;
-                                h = TD.Hours;
-                                m = TD.Minutes;
-                                s = TD.Seconds;
-                                dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00"); /// ERROR !!!!!!!!!!!! 
-                                minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                                //Numara cate minute au trecut de la inceputul shiftului:
                                 TimeSpan TS = dTo - dFrom;
                                 minutes = TS.TotalMinutes;
                                 min = minutes + 60;
@@ -401,10 +368,8 @@ namespace TB_CU_Dashboard
                                 secs = TS.Seconds;
                                 timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
                                 Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 3: " + timeDiff;
-                                //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                                //Intervale trecute
-                                intervaleTrecute = (min / 10) + 6;  // se aduna o ora (6 intervale) din ziua anterioara
+                              
+                                intervaleTrecute = (min / 10) + 6; 
                                 int salvat = Convert.ToInt32(intervaleTrecute);
                                 Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
 

@@ -11,13 +11,14 @@ using System.Net.Mail;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Text;
+using System.Web.UI.HtmlControls;
 
 namespace TB_CU_Dashboard
 {
     public partial class LedPanelsDashboard : System.Web.UI.Page
     {
-        SqlDataAdapter daCU; // qty pe shift
-        //SqlDataAdapter daTB;
+        SqlDataAdapter daCU; 
+        
         SqlDataAdapter daScrapIV;
         SqlDataAdapter daLD;
         SqlDataAdapter daFCY;
@@ -26,25 +27,28 @@ namespace TB_CU_Dashboard
         SqlDataAdapter daShiftID;
         SqlDataAdapter daScrapLastShift;
 
-        DataSet dsCU = new DataSet();
-        //DataSet dsTB = new DataSet();
-        DataSet dsScrapIV = new DataSet();
-        DataSet dsLD = new DataSet();
-        DataSet dsFCY = new DataSet();
-        DataSet dsSA = new DataSet();
-        DataSet dsScrapLastDay = new DataSet();
-        DataSet dsShiftID = new DataSet();
-        DataSet dsScrapLastShift = new DataSet();
+        readonly DataSet dsCU = new DataSet();
+        
+        readonly DataSet dsScrapIV = new DataSet();
+        readonly DataSet dsLD = new DataSet();
+        readonly DataSet dsFCY = new DataSet();
+        readonly DataSet dsSA = new DataSet();
+        readonly DataSet dsScrapLastDay = new DataSet();
+        readonly DataSet dsShiftID = new DataSet();
+        readonly DataSet dsScrapLastShift = new DataSet();
 
         StringBuilder htmlTable = new StringBuilder();
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!Page.IsPostBack)
-                BindData();
+            BindData();
+            HtmlMeta meta = new HtmlMeta();
+            meta.HttpEquiv = "Refresh";
+            meta.Content = "300;url=LedPanelsDashboard.aspx";
+            this.Page.Controls.Add(meta);
         }
 
         private void BindData()
-        {///====== Variable declaration =======
+        {
             string connectionString;
             SqlConnection cnn;
 
@@ -53,20 +57,19 @@ namespace TB_CU_Dashboard
 
             string connectionMCAT;
             SqlConnection cnnMCAT;
-            //======= Set connection string ======
+           
             connectionString = @"Data Source= TITM09S03MS03\TIT_I3; Initial Catalog= ctReports; User ID=ctReports; Password=Rep0rt1ng";//pentru SFI
             connectionERT = @"Data Source= TIAS067A ; Initial Catalog = NewERT; User ID=sa; Password=Server1nst";//Pentru ERT - folosit pentru extragere buget
             connectionMCAT = @"Data Source= TITM15C02DB02\TI_MCAT_HIST ; Initial Catalog = HistorianAndReports; User ID=tableauuser; Password=Rep0rt1ng";
-            //======= Assign connection
+          
             cnn = new SqlConnection(connectionString);
             cnnERT = new SqlConnection(connectionERT);
             cnnMCAT = new SqlConnection(connectionMCAT);
-            //======= Open connection 
+           
             cnn.Open();
             cnnERT.Open();
             cnnMCAT.Open();
-            //Label1.Text = "connection succesfull";
-            // Quantity CU pe shift:
+            
             SqlCommand cmd = new SqlCommand(@" SELECT TOP 1000 [area]
 ,[Quantity]
 + ( select isnull(sum(QuantityOK),0) as [Quantity]
@@ -394,8 +397,7 @@ end
             and Overallgrade like 'X')", cnnMCAT);
             daCU = new SqlDataAdapter(cmd);
             daCU.Fill(dsCU);
-            //daTB = new SqlDataAdapter(cmdTB);
-            //daTB.Fill(dsTB);
+           
             daScrapIV = new SqlDataAdapter(cmdScrapIV);
             daScrapIV.Fill(dsScrapIV);
             daLD = new SqlDataAdapter(cmdLastDay);
@@ -431,7 +433,7 @@ end
             string yesterday = DateTime.Today.AddDays(-1).ToString("dd-MM-yyyy");
             //-------------------------------------------------
             double ShiftTotalTime = 8 * 60; //480 min pe shift
-            double DayTotalTime = 24 * 60; //1440 min intr-o zi
+           
             double minutes; //de la inceputul shift-ului
             double minutesDay; // de la inceputul zilei de lucru
             double min;
@@ -442,9 +444,9 @@ end
             string sDateFrom;
             string sDateFromFullDay = "07:00:00"; // inceputul zilei de lucru
             string sDateTo = Convert.ToString(currentTime); //Now time
-            int h, m, s;
+           
             int hour, mins, secs;
-            string dayDiff;
+           
             string timeDiff;
             double RunRateShift;
             double RunRateScrap;
@@ -458,13 +460,8 @@ end
             int TargetScrapTotal = 870; //780; //720; //900; //780; // Serban a estimat 1050 pe zi
             int TargetScrapShift = 290; // TargetScrapTotal / 3;
 
-            //double EfficiencyPrevCU;
-            //double EfficiencyPrevTB;
-            ////////////// Conditia pe schimburi /////////////////////////////////////////////////////
-            htmlTable.Append("<table border='2px solid bold' style='border-collapse: collapse; width:100%; text-align:center; border-color:white; text-align: center; background-color: black; color: white;'><font size='80'>");
-            //htmlTable.Append(@"<tr><td colspan='4'  style='text-align:left; border-right:0px;'> Ziua in curs : </td>
-            //                       <td colspan='2'  style='text-align:right; border-left:0px;'>" + currentDay + @"</td>    
-            //                 </tr>");
+         htmlTable.Append("<table border='2px solid bold' style='border-collapse: collapse; width:100%; text-align:center; border-color:white; text-align: center; background-color: black; color: white;'><font size='80'>");
+          
             htmlTable.Append(@"<tr  style='border-top:2px;' ><td><font size='80'>" + currentDay + @"</font></td>
                                    <td><font size='80'> Realizat </font></td>  
                                    <td><font size='80'> Obiectiv </font></td>  
@@ -476,34 +473,18 @@ end
             {
                 //====================================== SHIFT 1 ================================================================
 
-                //if (!object.Equals(dsCU.Tables[0], null))
-                //{
+              
                 sDateFrom = "07:00:00"; // shift 1 start time
                 if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo) && DateTime.TryParse(sDateFromFullDay, out dFromFullDay))
                 {
-                    //Numara cate minute au trecut de la inceputul zilei de lucru:
-                    /*TimeSpan TD = dTo - dFromFullDay;
-                    h = TD.Hours;
-                    m = TD.Minutes;
-                    s = TD.Seconds;
-                    dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00");
-                    minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                    //Numara cate minute au trecut de la inceputul shiftului:
+                 
                     TimeSpan TS = dTo - dFrom;
                     minutes = TS.TotalMinutes;
-
-                    hour = TS.Hours;
-                    mins = TS.Minutes;
-                    secs = TS.Seconds;
-                    timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
-                    //Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 1: " + timeDiff;
-                    //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                    //Intervale trecute
+                  
+                   
                     intervaleTrecute = minutes / 10;
-                    int salvat = Convert.ToInt32(intervaleTrecute);
-                    //Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
+                   
+                   
 
                     double TargetScrap;
                     if (dsScrapIV.Tables[0].Rows.Count > 0)
@@ -617,9 +598,7 @@ end
                         }
 
                     }
-                    //   htmlTable.Append(@"<tr><td colspan='4' style='text-align:left; border-right:0px;'> Ziua anterioara : </td>
-                    //      <td colspan='2' style='text-align:right; border-left:0px;'>" + yesterday + @"</td>    
-                    //</tr>");
+                   
                     htmlTable.Append(@"<tr style='border-top:2px; border-top-style: solid;'><td><font  size='80'>" + yesterday + @" </font> </td>
                                    <td><font  size='80'> S1 </font></td>  
                                    <td><font  size='80'> S2 </font></td>  
@@ -631,11 +610,8 @@ end
                     {
                         for (int i = 0; i < dsScrapLastDay.Tables[0].Rows.Count; i++)
                         {
-                            ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                            //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                            //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                            //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                            //Label1.Text = Convert.ToString(DailyTarget);
+                         
+                           
                             htmlTable.Append("<tr>");
                             htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial' size='80'>" + "Scrap IV" + "</font></td>");
                             if (Convert.ToInt32(dsScrapLastDay.Tables[0].Rows[i]["s1"]) >= Convert.ToInt32(TargetScrapShift))
@@ -679,10 +655,7 @@ end
                         for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                         {
                             ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                            //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                            //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                            //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                            //Label1.Text = Convert.ToString(DailyTarget);
+                           
                             htmlTable.Append("<tr>");
                             htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial' size='80'> Volum " + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                             if (Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -733,31 +706,16 @@ end
 
                     if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo) && DateTime.TryParse(sDateFromFullDay, out dFromFullDay))
                     {
-                        //Numara cate minute au trecut de la inceputul zilei de lucru:
-                        /* TimeSpan TD = dTo - dFromFullDay;
-                         h = TD.Hours;
-                         m = TD.Minutes;
-                         s = TD.Seconds;
-                         dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00");
-                         minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                        //Numara cate minute au trecut de la inceputul shiftului:
+                      
                         TimeSpan TS = dTo - dFrom;
                         minutes = TS.TotalMinutes;
 
-                        hour = TS.Hours;
-                        mins = TS.Minutes;
-                        secs = TS.Seconds;
-                        timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
-                        //Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 2: " + timeDiff;
-                        //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                        //Intervale trecute
+                     
+                     
                         intervaleTrecute = minutes / 10;
-                        int salvat = Convert.ToInt32(intervaleTrecute);
-                        //Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
+                   
 
-                        //int TargetScrapDay = 780 / 3;
+                        
                         double TargetScrap;
                         if (dsScrapIV.Tables[0].Rows.Count > 0)
                         {
@@ -869,9 +827,7 @@ end
                             }
 
                         }
-                        //   htmlTable.Append(@"<tr><td colspan='4' style='text-align:left; border-right:0px;'> Ziua anterioara : </td>
-                        //      <td colspan='2' style='text-align:right; border-left:0px;'>" + yesterday + @"</td>    
-                        //</tr>");
+                      
                         htmlTable.Append(@"<tr style='border-top:2px; border-top-style: solid;'><td><font size='80'>" + yesterday + @" </font> </td>
                                    <td><font size='80'> S1 </font></td>  
                                    <td><font size='80'> S2 </font></td>  
@@ -883,11 +839,8 @@ end
                         {
                             for (int i = 0; i < dsScrapLastDay.Tables[0].Rows.Count; i++)
                             {
-                                ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                //Label1.Text = Convert.ToString(DailyTarget);
+                              
+                             
                                 htmlTable.Append("<tr>");
                                 htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial' size='80'>" + "Scrap IV" + "</font></td>");
                                 if (Convert.ToInt32(dsScrapLastDay.Tables[0].Rows[i]["s1"]) >= Convert.ToInt32(TargetScrapShift))
@@ -931,10 +884,7 @@ end
                             for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                             {
                                 ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                //Label1.Text = Convert.ToString(DailyTarget);
+                            
                                 htmlTable.Append("<tr>");
                                 htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial' size='80'> Volum " + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                                 if (Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -988,31 +938,16 @@ end
                         if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo))
                         {
 
-                            //Numara cate minute au trecut de la inceputul zilei de lucru:
-                            /*TimeSpan TD = dTo - dFromFullDay;
-                            h = TD.Hours;
-                            m = TD.Minutes;
-                            s = TD.Seconds;
-                            dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00"); /// ERROR !!!!!!!!!!!! 
-                            minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                            //Numara cate minute au trecut de la inceputul shiftului:
+                        
                             TimeSpan TS = dTo - dFrom;
                             minutes = TS.TotalMinutes;
 
-                            hour = TS.Hours;
-                            mins = TS.Minutes;
-                            secs = TS.Seconds;
-                            timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
-                            //Label1.Text = "Cat timp a trecut de cand a inceput shift-ul  TEST: " + timeDiff;
-                            //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
 
-                            //Intervale trecute
+                       
                             intervaleTrecute = minutes / 10;
-                            int salvat = Convert.ToInt32(intervaleTrecute);
-                            //Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
+                          
 
-                            //int TargetScrapDay = 780 / 3;
+
                             double TargetScrap;
                             if (dsScrapIV.Tables[0].Rows.Count > 0)
                             {
@@ -1123,9 +1058,7 @@ end
                                     htmlTable.Append("</tr>");
                                 }
                             }
-                            //   htmlTable.Append(@"<tr><td colspan='4' style='text-align:left; border-right:0px;'> Ziua anterioara : </td>
-                            //      <td colspan='2' style='text-align:right; border-left:0px;'>" + yesterday + @"</td>    
-                            //</tr>");
+                         
                             htmlTable.Append(@"<tr style='border-top:2px;  border-top-style: solid;'><td><font size='80'>" + yesterday + @" </font></td>
                                    <td><font size='80'> S1 </font></td>  
                                    <td><font size='80'> S2 </font></td>  
@@ -1137,11 +1070,7 @@ end
                             {
                                 for (int i = 0; i < dsScrapLastDay.Tables[0].Rows.Count; i++)
                                 {
-                                    ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                    //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                    //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                    //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                    //Label1.Text = Convert.ToString(DailyTarget);
+                                 
                                     htmlTable.Append("<tr>");
                                     htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial' size='80'>" + "Scrap IV" + "</font></td>");
                                     if (Convert.ToInt32(dsScrapLastDay.Tables[0].Rows[i]["s1"]) >= Convert.ToInt32(TargetScrapShift))
@@ -1185,10 +1114,7 @@ end
                                 for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                                 {
                                     ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                    //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                    //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                    //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                    //Label1.Text = Convert.ToString(DailyTarget);
+                                   
                                     htmlTable.Append("<tr>");
                                     htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial' size='80'> Volum " + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                                     if (Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -1239,31 +1165,15 @@ end
                             if (DateTime.TryParse("00:00:00", out dFrom) && DateTime.TryParse(sDateTo, out dTo))
                             {
 
-                                //Numara cate minute au trecut de la inceputul zilei de lucru:
-                                /*TimeSpan TD = dTo - dFromFullDay;
-                                h = TD.Hours;
-                                m = TD.Minutes;
-                                s = TD.Seconds;
-                                dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00"); /// ERROR !!!!!!!!!!!! 
-                                minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                                //Numara cate minute au trecut de la inceputul shiftului:
+                             
                                 TimeSpan TS = dTo - dFrom;
                                 minutes = TS.TotalMinutes;
                                 min = minutes + 60;
 
-                                hour = TS.Hours + 1;
-                                mins = TS.Minutes;
-                                secs = TS.Seconds;
-                                timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
-                                //Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 3: " + timeDiff;
-                                //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                                //Intervale trecute
+                             
+                             
                                 intervaleTrecute = (min / 10) + 6;  // se aduna o ora (6 intervale) din ziua anterioara
-                                int salvat = Convert.ToInt32(intervaleTrecute);
-                                //Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
-                                //int TargetScrapDay = 780 / 3;
+                              
                                 double TargetScrap;
                                 if (dsScrapIV.Tables[0].Rows.Count > 0)
                                 {
@@ -1375,9 +1285,7 @@ end
                                     }
 
                                 }
-                                //   htmlTable.Append(@"<tr><td colspan='4' style='text-align:left; border-right:0px;'> Ziua anterioara : </td>
-                                //      <td colspan='2' style='text-align:right; border-left:0px;'>" + yesterday + @"</td>    
-                                //</tr>");
+                            
                                 htmlTable.Append(@"<tr style='border-top:2px; border-top-style: solid;'><td>" + yesterday + @" </td>
                                    <td> S1 </td>  
                                    <td> S2 </td>  
@@ -1389,11 +1297,7 @@ end
                                 {
                                     for (int i = 0; i < dsScrapLastDay.Tables[0].Rows.Count; i++)
                                     {
-                                        ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                        //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                        //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                        //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                        //Label1.Text = Convert.ToString(DailyTarget);
+                                     
                                         htmlTable.Append("<tr>");
                                         htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + "Scrap IV" + "</font></td>");
                                         if (Convert.ToInt32(dsScrapLastDay.Tables[0].Rows[i]["s1"]) >= Convert.ToInt32(TargetScrapShift))
@@ -1437,10 +1341,7 @@ end
                                     for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                                     {
                                         ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                        //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                        //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                        //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                        //Label1.Text = Convert.ToString(DailyTarget);
+                                        
                                         htmlTable.Append("<tr>");
                                         htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'> Volum " + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                                         if (Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -1480,7 +1381,6 @@ end
                                     }
                                 }
 
-                                ////////////////////
 
                             }
                         }

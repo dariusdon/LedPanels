@@ -11,6 +11,7 @@ using System.Net.Mail;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Text;
+using System.Web.UI.HtmlControls;
 
 namespace TB_CU_Dashboard
 {
@@ -33,8 +34,11 @@ namespace TB_CU_Dashboard
         StringBuilder htmlTable = new StringBuilder();
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!Page.IsPostBack)
-                BindData();
+            BindData();
+            HtmlMeta meta = new HtmlMeta();
+            meta.HttpEquiv = "Refresh";
+            meta.Content = "300;url=TB_CU.aspx";
+            this.Page.Controls.Add(meta);
         }
 
         private void BindData()
@@ -236,7 +240,7 @@ namespace TB_CU_Dashboard
             daSA.Fill(dsSA);
 
             cmd.ExecuteNonQuery();
-            //cmdTB.ExecuteNonQuery();
+          
             cmdScrapIV.ExecuteNonQuery();
             cnn.Close();
             cnnERT.Close();
@@ -254,9 +258,9 @@ namespace TB_CU_Dashboard
             string yesterday = DateTime.Today.AddDays(-1).ToString("dd-MM-yyyy");
             //-------------------------------------------------
             double ShiftTotalTime = 8 * 60; //480 min pe shift
-            double DayTotalTime = 24 * 60; //1440 min intr-o zi
+         
             double minutes; //de la inceputul shift-ului
-            double minutesDay; // de la inceputul zilei de lucru
+           
             double min;
             //----------------------------
             DateTime dFromFullDay;
@@ -265,9 +269,9 @@ namespace TB_CU_Dashboard
             string sDateFrom;
             string sDateFromFullDay = "07:00:00"; // inceputul zilei de lucru
             string sDateTo = Convert.ToString(currentTime); //Now time
-            int h, m, s;
+            
             int hour, mins, secs;
-            string dayDiff;
+          
             string timeDiff;
             double RunRateShift;
             double intervaleTrecute;
@@ -275,8 +279,7 @@ namespace TB_CU_Dashboard
             double DailyTarget;
             double ForecastShift;
             double ForecastShiftY;
-            //double EfficiencyPrevCU;
-            //double EfficiencyPrevTB;
+            
             ////////////// Conditia pe schimburi /////////////////////////////////////////////////////
             htmlTable.Append("<table border='2px solid bold' style='border-collapse: collapse;text-align:center; border-color:white; text-align: center; background-color: black; color: white;'>");
             htmlTable.Append(@"<tr><td colspan='4'  style='text-align:left; border-right:0px;'> Ziua in curs : </td>
@@ -293,20 +296,11 @@ namespace TB_CU_Dashboard
             {
                 //====================================== SHIFT 1 ================================================================
 
-                //if (!object.Equals(dsCU.Tables[0], null))
-                //{
+           
                 sDateFrom = "07:00:00"; // shift 1 start time
                 if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo) && DateTime.TryParse(sDateFromFullDay, out dFromFullDay))
                 {
-                    //Numara cate minute au trecut de la inceputul zilei de lucru:
-                    /*TimeSpan TD = dTo - dFromFullDay;
-                    h = TD.Hours;
-                    m = TD.Minutes;
-                    s = TD.Seconds;
-                    dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00");
-                    minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                    //Numara cate minute au trecut de la inceputul shiftului:
+                   
                     TimeSpan TS = dTo - dFrom;
                     minutes = TS.TotalMinutes;
 
@@ -315,9 +309,7 @@ namespace TB_CU_Dashboard
                     secs = TS.Seconds;
                     timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
                     Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 1: " + timeDiff;
-                    //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                    //Intervale trecute
+                   
                     intervaleTrecute = minutes / 10;
                     int salvat = Convert.ToInt32(intervaleTrecute);
                     Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
@@ -331,7 +323,7 @@ namespace TB_CU_Dashboard
                             RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
                             DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
                             Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                            //Label1.Text = Convert.ToString(DailyTarget);
+                           
                             htmlTable.Append("<tr>");
                             htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsCU.Tables[0].Rows[i]["area"] + "</font></td>");
                             if (Convert.ToInt32(dsCU.Tables[0].Rows[i]["Quantity"]) >= Convert.ToInt32(Target))
@@ -381,10 +373,7 @@ namespace TB_CU_Dashboard
                         for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                         {
                             ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                            //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                            //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                            //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                            //Label1.Text = Convert.ToString(DailyTarget);
+                           
                             htmlTable.Append("<tr>");
                             htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                             if (Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -434,15 +423,7 @@ namespace TB_CU_Dashboard
 
                     if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo) && DateTime.TryParse(sDateFromFullDay, out dFromFullDay))
                     {
-                        //Numara cate minute au trecut de la inceputul zilei de lucru:
-                        /* TimeSpan TD = dTo - dFromFullDay;
-                         h = TD.Hours;
-                         m = TD.Minutes;
-                         s = TD.Seconds;
-                         dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00");
-                         minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                        //Numara cate minute au trecut de la inceputul shiftului:
+                       
                         TimeSpan TS = dTo - dFrom;
                         minutes = TS.TotalMinutes;
 
@@ -451,9 +432,7 @@ namespace TB_CU_Dashboard
                         secs = TS.Seconds;
                         timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
                         Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 2: " + timeDiff;
-                        //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                        //Intervale trecute
+                       
                         intervaleTrecute = minutes / 10;
                         int salvat = Convert.ToInt32(intervaleTrecute);
                         Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
@@ -467,7 +446,7 @@ namespace TB_CU_Dashboard
                                 RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
                                 DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
                                 Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                //Label1.Text = Convert.ToString(DailyTarget);
+                               
                                 htmlTable.Append("<tr>");
                                 htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsCU.Tables[0].Rows[i]["area"] + "</font></td>");
                                 if (Convert.ToInt32(dsCU.Tables[0].Rows[i]["Quantity"]) >= Convert.ToInt32(Target))
@@ -517,10 +496,7 @@ namespace TB_CU_Dashboard
                             for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                             {
                                 ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                //Label1.Text = Convert.ToString(DailyTarget);
+                              
                                 htmlTable.Append("<tr>");
                                 htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                                 if(Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -573,15 +549,7 @@ namespace TB_CU_Dashboard
                         if (DateTime.TryParse(sDateFrom, out dFrom) && DateTime.TryParse(sDateTo, out dTo))
                         {
 
-                            //Numara cate minute au trecut de la inceputul zilei de lucru:
-                            /*TimeSpan TD = dTo - dFromFullDay;
-                            h = TD.Hours;
-                            m = TD.Minutes;
-                            s = TD.Seconds;
-                            dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00"); /// ERROR !!!!!!!!!!!! 
-                            minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                            //Numara cate minute au trecut de la inceputul shiftului:
+                           
                             TimeSpan TS = dTo - dFrom;
                             minutes = TS.TotalMinutes;
 
@@ -590,9 +558,7 @@ namespace TB_CU_Dashboard
                             secs = TS.Seconds;
                             timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
                             Label1.Text = "Cat timp a trecut de cand a inceput shift-ul  TEST: " + timeDiff;
-                            //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                            //Intervale trecute
+                        
                             intervaleTrecute = minutes / 10;
                             int salvat = Convert.ToInt32(intervaleTrecute);
                             Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
@@ -606,7 +572,7 @@ namespace TB_CU_Dashboard
                                     RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
                                     DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
                                     Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                    //Label1.Text = Convert.ToString(DailyTarget);
+                                  
                                     htmlTable.Append("<tr>");
                                     htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsCU.Tables[0].Rows[i]["area"] + "</font></td>");
                                     if (Convert.ToInt32(dsCU.Tables[0].Rows[i]["Quantity"]) >= Convert.ToInt32(Target))
@@ -656,10 +622,7 @@ namespace TB_CU_Dashboard
                                 for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                                 {
                                     ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                    //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                    //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                    //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                    //Label1.Text = Convert.ToString(DailyTarget);
+                                  
                                     htmlTable.Append("<tr>");
                                     htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                                     if (Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -708,15 +671,7 @@ namespace TB_CU_Dashboard
                             if (DateTime.TryParse("00:00:00", out dFrom) && DateTime.TryParse(sDateTo, out dTo))
                             {
 
-                                //Numara cate minute au trecut de la inceputul zilei de lucru:
-                                /*TimeSpan TD = dTo - dFromFullDay;
-                                h = TD.Hours;
-                                m = TD.Minutes;
-                                s = TD.Seconds;
-                                dayDiff = h.ToString("00") + ":" + m.ToString("00") + ":" + s.ToString("00"); /// ERROR !!!!!!!!!!!! 
-                                minutesDay = TimeSpan.Parse(dayDiff).TotalMinutes;*/
-
-                                //Numara cate minute au trecut de la inceputul shiftului:
+                             
                                 TimeSpan TS = dTo - dFrom;
                                 minutes = TS.TotalMinutes;
                                 min = minutes + 60;
@@ -726,10 +681,8 @@ namespace TB_CU_Dashboard
                                 secs = TS.Seconds;
                                 timeDiff = hour.ToString("00") + ":" + mins.ToString("00") + ":" + secs.ToString("00");
                                 Label1.Text = "Cat timp a trecut de cand a inceput shift-ul 3: " + timeDiff;
-                                //Label3.Text = "Total minute: " + minutes.ToString(); //diferenta in minute
-
-                                //Intervale trecute
-                                intervaleTrecute = (min / 10) + 6;  // se aduna o ora (6 intervale) din ziua anterioara
+                             
+                                intervaleTrecute = (min / 10) + 6; 
                                 int salvat = Convert.ToInt32(intervaleTrecute);
                                 Label3.Text = "Intervale de 10 minute trecute de la inceputul shift-ului: " + Convert.ToString(salvat);
 
@@ -740,8 +693,7 @@ namespace TB_CU_Dashboard
                                         ForecastShift = Convert.ToDouble(dsCU.Tables[0].Rows[0]["Forecast"]) / 3;
                                         RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
                                         DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                        Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                        //Label1.Text = Convert.ToString(DailyTarget);
+                                        Target = DailyTarget * Convert.ToInt32(intervaleTrecute); 
                                         htmlTable.Append("<tr>");
                                         htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsCU.Tables[0].Rows[i]["area"] + "</font></td>");
                                         if (Convert.ToInt32(dsCU.Tables[0].Rows[i]["Quantity"]) >= Convert.ToInt32(Target))
@@ -791,10 +743,7 @@ namespace TB_CU_Dashboard
                                     for (int i = 0; i < dsLD.Tables[0].Rows.Count; i++)
                                     {
                                         ForecastShiftY = Convert.ToDouble(dsFCY.Tables[0].Rows[0]["Forcast"]) / 3;
-                                        //RunRateShift = Convert.ToDouble(dsCU.Tables[0].Rows[i]["quantity"]) / minutes * ShiftTotalTime;
-                                        //DailyTarget = (Convert.ToDouble(dsCU.Tables[0].Rows[i]["Forecast"]) / 24) / 6;
-                                        //Target = DailyTarget * Convert.ToInt32(intervaleTrecute);
-                                        //Label1.Text = Convert.ToString(DailyTarget);
+                                     
                                         htmlTable.Append("<tr>");
                                         htmlTable.Append("<td style='background-color:black; color:white;'><font face='arial'>" + dsLD.Tables[0].Rows[i]["area"] + "</font></td>");
                                         if (Convert.ToInt32(dsLD.Tables[0].Rows[i]["shift_1"]) >= Convert.ToInt32(ForecastShiftY))
@@ -834,7 +783,6 @@ namespace TB_CU_Dashboard
                                     }
                                 }
 
-                                ////////////////////
 
                             }
                         }
